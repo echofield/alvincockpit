@@ -157,6 +157,7 @@ tbody tr:hover{background:rgba(22,75,57,.035)}
 .focus-metric{border-bottom:1px solid var(--line);padding-bottom:14px}.focus-metric:last-child{border-bottom:0;padding-bottom:0}
 .focus-metric label{display:block;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}.focus-metric strong{font:400 22px/1.15 var(--serif)}.focus-metric p{font-size:12px;line-height:1.5;color:var(--muted);margin:6px 0 0}
 .focus-queue{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}.focus-card{border:1px solid var(--line);background:rgba(255,255,255,.16);padding:16px;text-align:left}.focus-card:hover{border-color:rgba(22,75,57,.55);background:rgba(22,75,57,.035)}.focus-card-top{display:flex;justify-content:space-between;gap:8px;font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}.focus-card h3{font:400 23px/1.05 var(--serif);margin:20px 0 8px}.focus-card p{font-size:12px;line-height:1.5;color:var(--muted);margin:0}
+.focus-process{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:22px}.focus-step{padding:13px 12px;border-right:1px solid var(--line)}.focus-step:last-child{border-right:0}.focus-step label{display:block;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:6px}.focus-step p{font-size:11px;line-height:1.45;color:var(--muted);margin:0}.focus-next{min-width:116px}
 @media(max-width:900px){
   .shell{padding:14px 10px 92px}
   .topbar{padding:24px 20px 18px}
@@ -199,7 +200,7 @@ tbody tr:hover{background:rgba(22,75,57,.035)}
   .detail-grid{grid-template-columns:1fr}
   .detail.full{grid-column:auto}
   .queue-item{grid-template-columns:34px 1fr auto}
-  .focus-stage{grid-template-columns:1fr}.focus-main{border-right:0;border-bottom:1px solid var(--line)}.focus-queue{grid-template-columns:1fr}
+  .focus-stage{grid-template-columns:1fr}.focus-main{border-right:0;border-bottom:1px solid var(--line)}.focus-queue{grid-template-columns:1fr}.focus-process{grid-template-columns:1fr 1fr}.focus-step:nth-child(2){border-right:0}.focus-step:nth-child(-n+2){border-bottom:1px solid var(--line)}
 }
 </style>
 </head>
@@ -414,6 +415,7 @@ const direct = DB.direct.map(x=>normalize(x,"direct"));
 const feeders = DB.feeders.map(x=>normalize(x,"feeders"));
 const LOCAL_ORIGIN = "Fred Astaire Dance Studios Union Square, 857 Broadway, 3rd Floor, New York, NY 10003";
 let focusScope = "local";
+let focusCursor = 0;
 const LOCAL_TARGETS = Object.freeze([{organization:"Union Square Partnership",type:"Association",address:"200 Park Avenue South, New York, NY 10003",walk:"~7 min",priority:"A",reason:"The district's steward already convenes residents, businesses and public programs.",next:"Ask for the person shaping neighborhood programming and propose one beginner-friendly local social.",website:"https://www.unionsquarenyc.org/"},{organization:"GrowNYC - Union Square Greenmarket",type:"Association",address:"Union Square West, New York, NY 10003",walk:"~3 min",priority:"A",reason:"A recurring local gathering with a strong community and wellbeing adjacency.",next:"Ask about partner/community programming rather than a vendor placement.",website:"https://www.grownyc.org/greenmarket/manhattan-union-square"},{organization:"14th Street Y",type:"Association",address:"344 East 14th Street, New York, NY 10003",walk:"~8 min",priority:"A",reason:"A nearby community institution with adult, cultural and social-programming audiences.",next:"Find the adult/community-programming lead and offer a co-hosted beginner social.",website:"https://www.14streety.org/"},{organization:"The New School Alumni Engagement",type:"Alumni",address:"66 West 12th Street, New York, NY 10011",walk:"~9 min",priority:"A",reason:"A large creative alumni community with event and reunion momentum.",next:"Propose an alumni-only social as a low-pressure way to reconnect graduates.",website:"https://www.newschool.edu/alumni/"},{organization:"NYU Alumni",type:"Alumni",address:"New York University, Washington Square, New York, NY 10012",walk:"~12 min",priority:"B",reason:"A large, highly local alumni base that can support affinity-group and young-alumni programming.",next:"Find the NYC events or young-alumni contact; pitch a capped, beginner-safe studio night.",website:"https://www.nyu.edu/alumni.html"},{organization:"School of Visual Arts Alumni Affairs",type:"Alumni",address:"209 East 23rd Street, New York, NY 10010",walk:"~11 min",priority:"B",reason:"A creative alumni community close enough for an after-work cultural/social ritual.",next:"Offer a small pilot for alumni working in design, media and the arts.",website:"https://sva.edu/alumni"},{organization:"Strand Book Store",type:"Local business",address:"828 Broadway, New York, NY 10003",walk:"~1 min",priority:"A",reason:"An iconic neighboring cultural business with event-minded customers and staff.",next:"Ask about a staff social or a cross-promotion around a literary/cultural evening.",website:"https://www.strandbooks.com/"},{organization:"W New York - Union Square",type:"Local business",address:"201 Park Avenue South, New York, NY 10003",walk:"~4 min",priority:"A",reason:"A nearby hotel can turn a walkable studio session into a distinctive guest experience.",next:"Ask for concierge or guest-experience leadership; propose a simple bookable guest offer.",website:"https://www.marriott.com/"},{organization:"Union Square Cafe",type:"Local business",address:"101 East 19th Street, New York, NY 10003",walk:"~5 min",priority:"B",reason:"A hospitality-led neighbor suited to a referral or occasion-based partnership.",next:"Start with management or private-events outreach: dinner plus beginner dance social.",website:"https://www.unionsquarecafe.com/"}]);
 
 function goPage(id){
@@ -491,7 +493,15 @@ function renderOverview(){
   ];
   $("#flowLogic").innerHTML=flows.map(([a,b])=>`<div class="flow"><strong>${a}</strong><p>${b}</p></div>`).join("");
 }
-function setFocusScope(scope){ focusScope=scope; renderFocus(); }
+function setFocusScope(scope){ focusScope=scope; focusCursor=0; renderFocus(); }
+function nextFocus(){ const total=focusRows().length; focusCursor=total?(focusCursor+1)%total:0; renderFocus(); }
+function saleProcess(item){
+  const why=item.kind==="local"?item.reason:`${item.context} is the channel with the strongest current fit.`;
+  const offer=item.copy||"A private, beginner-safe social dance experience.";
+  const route=item.kind==="local"?`Walkable in ${item.walk}; start with the right local program lead.`:item.next;
+  const ask=item.kind==="local"?"Ask for one pilot social, then make it recurring.":"Ask for a 12-minute call or one pilot date.";
+  return [["Why",why],["Offer",offer],["Route",route],["Ask",ask]].map(([label,copy])=>`<div class="focus-step"><label>${label}</label><p>${esc(copy)}</p></div>`).join("");
+}
 function focusRows(){
   const local=LOCAL_TARGETS.map((x,index)=>({kind:"local",index,...x,status:"Ready",context:x.walk}));
   const directRows=direct.filter(x=>!["Won","Lost"].includes(x.status)).map(x=>({kind:"direct",index:direct.indexOf(x),organization:x.organization,priority:x.priority,status:x.status,context:x.category,copy:x.offer,next:x.contact,fit:x.fit}));
@@ -499,16 +509,16 @@ function focusRows(){
   const rows=focusScope==="local"?local:focusScope==="direct"?directRows:focusScope==="feeders"?feederRows:[...local,...directRows,...feederRows];
   return rows.sort((a,b)=>priorityOrder(a.priority)-priorityOrder(b.priority)||String(a.context).localeCompare(String(b.context)));
 }
-function focusAction(item){ return item.kind==="local"?`<a class="primary" target="_blank" rel="noopener" href="${mapRoute(item.address)}">Open Google route</a><a class="secondary" target="_blank" rel="noopener" href="${esc(item.website)}">Open website</a>`:`<button class="primary" onclick='openDrawer("${item.kind}",${item.index})'>Open full context</button><button class="secondary" onclick='goPage("${item.kind==="direct"?"leads":"feeders"}")'>Open list</button>`; }
+function focusAction(item){ const next=`<button class="primary focus-next" onclick="nextFocus()">Next target -&gt;</button>`; return item.kind==="local"?`${next}<a class="secondary" target="_blank" rel="noopener" href="${mapRoute(item.address)}">Google route</a><a class="secondary" target="_blank" rel="noopener" href="${esc(item.website)}">Website</a>`:`${next}<button class="secondary" onclick='openDrawer("${item.kind}",${item.index})'>Open full context</button><button class="secondary" onclick='goPage("${item.kind==="direct"?"leads":"feeders"}")'>Open list</button>`; }
 function focusCard(item){ return item.kind==="local"?`<button class="focus-card" onclick='window.open("${mapRoute(item.address)}","_blank","noopener")'><div class="focus-card-top"><span>${esc(item.context)}</span><span>${esc(item.priority)}</span></div><h3>${esc(item.organization)}</h3><p>${esc(item.next)}</p></button>`:`<button class="focus-card" onclick='openDrawer("${item.kind}",${item.index})'><div class="focus-card-top"><span>${esc(item.context)}</span><span>${esc(item.priority)} · ${item.fit}/5</span></div><h3>${esc(item.organization)}</h3><p>${esc(item.next)}</p></button>`; }
 function renderFocus(){
-  const rows=focusRows(), item=rows[0];
+  const rows=focusRows(); if(focusCursor>=rows.length) focusCursor=0; const ordered=rows.slice(focusCursor).concat(rows.slice(0,focusCursor)), item=ordered[0];
   $$("#focusSwitch button").forEach((button,index)=>button.classList.toggle("active",["local","direct","feeders","all"][index]===focusScope));
   if(!item){ $("#focusMain").innerHTML=`<div class="empty">No active opportunities in this route.</div>`; $("#focusContext").innerHTML=""; $("#focusQueue").innerHTML=""; return; }
   const title=item.kind==="local"?"A walkable next move.":item.status!=="Not contacted"?"Move the live thread forward.":"Start the next credible conversation.";
-  $("#focusMain").innerHTML=`<div class="focus-kicker">${esc(title)}</div><div class="focus-name">${esc(item.organization)}</div><p class="focus-copy">${esc(item.copy||item.reason)}</p><div class="focus-actions">${focusAction(item)}</div>`;
-  $("#focusContext").innerHTML=`<div class="focus-metric"><label>Route</label><strong>${esc(item.context)}</strong><p>${item.kind==="local"?esc(item.address):esc(item.status)}</p></div><div class="focus-metric"><label>${item.kind==="local"?"Walking estimate":"Priority / fit"}</label><strong>${item.kind==="local"?esc(item.walk):`${esc(item.priority)} · ${item.fit}/5`}</strong><p>${esc(item.next)}</p></div><div class="focus-metric"><label>Daily sweep</label><strong>1 of ${rows.length}</strong><p>Take one action, then return here for the next move.</p></div>`;
-  $("#focusQueue").innerHTML=rows.slice(1,4).map(focusCard).join("");
+  $("#focusMain").innerHTML=`<div class="focus-kicker">${esc(title)}</div><div class="focus-name">${esc(item.organization)}</div><p class="focus-copy">${esc(item.copy||item.reason)}</p><div class="focus-process">${saleProcess(item)}</div><div class="focus-actions">${focusAction(item)}</div>`;
+  $("#focusContext").innerHTML=`<div class="focus-metric"><label>Route</label><strong>${esc(item.context)}</strong><p>${item.kind==="local"?esc(item.address):esc(item.status)}</p></div><div class="focus-metric"><label>${item.kind==="local"?"Walking estimate":"Priority / fit"}</label><strong>${item.kind==="local"?esc(item.walk):`${esc(item.priority)} · ${item.fit}/5`}</strong><p>${esc(item.next)}</p></div><div class="focus-metric"><label>Daily sweep</label><strong>${focusCursor+1} of ${rows.length}</strong><p>Use Next for a fast 100-target daily sweep.</p></div>`;
+  $("#focusQueue").innerHTML=ordered.slice(1,4).map(focusCard).join("");
 }
 
 function mapRoute(address){ return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(LOCAL_ORIGIN)}&destination=${encodeURIComponent(address)}&travelmode=walking`; }
