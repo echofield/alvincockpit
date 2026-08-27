@@ -8,7 +8,7 @@ export default {
     return new HTMLRewriter()
       .on('body', {
         element(element) {
-          element.append('<script src="/upgrade.js?v=20260825-focus-local-v2"></script><script src="/local-leads-100.js?v=20260827-abc-local-100"></script>', { html: true });
+          element.append('<script src="/upgrade.js?v=20260825-focus-local-v2"></script><script src="/local-leads-100.js?v=20260827-abc-local-100-v2"></script>', { html: true });
         },
       })
       .transform(response);
